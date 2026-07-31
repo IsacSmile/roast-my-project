@@ -32,8 +32,8 @@ export const MarqueeBar: React.FC<MarqueeBarProps> = ({
       <span className="text-zinc-700">•</span>
       <span>
         Brought To Life By{' '}
-        <strong className="font-bold text-orange-400 tracking-widest text-sm">
-          FAIZ IMAM
+        <strong className="font-cursive text-sm font-bold text-orange-400 tracking-wider capitalize normal-case">
+          Faiz Imam
         </strong>
       </span>
       <span className="text-zinc-700">{isVertical ? '│' : '•'}</span>

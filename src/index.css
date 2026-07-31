@@ -1,6 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
 @import "tailwindcss";
 
 @layer utilities {
+  .font-cursive {
+    font-family: 'Dancing Script', cursive, sans-serif;
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;
