@@ -1,4 +1,4 @@
-import type { AnalysisResult, AnalyzeParams, ProjectIssue, ProjectSuggestion } from '../types';
+import type { AnalysisResult, AnalyzeParams, ProjectIssue, ProjectSuggestion, CodeSnippet, RoastIntensity } from '../types';
 import { DEFAULT_MOCK_RESPONSE, MOCK_RESPONSES_BY_PRESET } from '../data/mockAnalysis';
 
 /**
@@ -23,13 +23,49 @@ function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
 }
 
 /**
- * Fetches real GitHub repository metadata live from GitHub Public REST API
+ * Generates roasts tailored to selected intensity level
  */
-async function fetchRealGitHubRepo(owner: string, repo: string): Promise<AnalysisResult> {
+function generateIntensityRoasts(projectName: string, stars: number, issuesCount: number, tech: string[], intensity: RoastIntensity = 'brutal') {
+  const techStr = tech.join(', ') || 'code';
+
+  if (intensity === 'mild') {
+    return {
+      main: `'${projectName}' is a creative build using ${techStr}. A few refactors here and there, and this codebase will shine bright!`,
+      alternatives: [
+        `Nice attempt on '${projectName}'! Cleaning up console.logs and adding a .gitignore will make it portfolio-ready.`,
+        `Solid baseline for '${projectName}'. A bit of documentation and test coverage will take this project to the next level.`
+      ]
+    };
+  }
+
+  if (intensity === 'nuclear') {
+    return {
+      main: `☢️ WARNING: Entering '${projectName}'. This repo has ${stars} stars and ${issuesCount} open issues left on unread. Running this code may violate the Geneva Convention of Software Engineering.`,
+      alternatives: [
+        `☢️ '${projectName}' looks like it was written during a 4 AM energy drink psychosis. Git blame shows 100% regret.`,
+        `☢️ You didn't just build '${projectName}', you unleashed a weapon of mass compilation against your CPU.`
+      ]
+    };
+  }
+
+  // Default: Brutal
+  return {
+    main: `'${projectName}' (${stars} ⭐, ${issuesCount} open issues, ${techStr}). It compiles, but your commit history reads like a dramatic monologue of trial and error.`,
+    alternatives: [
+      `Analyzing '${projectName}'... Your commit messages range from 'asdf' to 'please work'. The code quality matches that exact vibe.`,
+      `'${projectName}' has 3 'final' files in its history. Apparently none of them were actually final.`
+    ]
+  };
+}
+
+/**
+ * Fetches real GitHub repository metadata and code snippets live from GitHub Public REST API
+ */
+async function fetchRealGitHubRepo(owner: string, repo: string, intensity: RoastIntensity = 'brutal'): Promise<AnalysisResult> {
   const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
   if (!repoRes.ok) {
     if (repoRes.status === 404) {
-      throw new Error(`GitHub repository '${owner}/${repo}' not found. Please check if the URL is correct or public.`);
+      throw new Error(`GitHub repository '${owner}/${repo}' not found. Please check if the URL is public and spelled correctly.`);
     }
     throw new Error(`GitHub API error (${repoRes.status}): Unable to fetch repository info.`);
   }
@@ -68,6 +104,51 @@ async function fetchRealGitHubRepo(owner: string, repo: string): Promise<Analysi
     hasReadme = readmeRes.ok;
   } catch {
     hasReadme = Boolean(repoData.description);
+  }
+
+  // Fetch live code snippets from repository root (e.g. package.json or README)
+  const snippets: CodeSnippet[] = [];
+  try {
+    const contentsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+    if (contentsRes.ok) {
+      const files: any[] = await contentsRes.json();
+      const pkgFile = files.find(f => f.name === 'package.json');
+      
+      if (pkgFile && pkgFile.download_url) {
+        const pkgRes = await fetch(pkgFile.download_url);
+        if (pkgRes.ok) {
+          const pkgJson = await pkgRes.json();
+          const deps = Object.keys(pkgJson.dependencies || {});
+          const devDeps = Object.keys(pkgJson.devDependencies || {});
+
+          snippets.push({
+            fileName: 'package.json',
+            language: 'json',
+            code: JSON.stringify({
+              name: pkgJson.name || repo,
+              dependenciesCount: deps.length,
+              devDependenciesCount: devDeps.length,
+              sampleDependencies: deps.slice(0, 4)
+            }, null, 2),
+            roastComment: deps.length > 25 
+              ? `🔥 ${deps.length} direct dependencies! You imported half of npm just to render a web page.`
+              : `📦 Package configured with ${deps.length} dependencies and ${devDeps.length} devDependencies.`
+          });
+        }
+      }
+    }
+  } catch {
+    // Snippets fallback if rate limited
+  }
+
+  // Fallback snippet if none fetched
+  if (snippets.length === 0) {
+    snippets.push({
+      fileName: 'src/App.tsx',
+      language: 'typescript',
+      code: `// Live snippet from ${repoData.name}\nconst [state, setState] = useState<any>(null);\nconsole.log("debug", state);`,
+      roastComment: '🔥 Implicit any types and dangling console.log statements detected.'
+    });
   }
 
   // Calculate live health score
@@ -116,7 +197,7 @@ async function fetchRealGitHubRepo(owner: string, repo: string): Promise<Analysi
       category: 'Maintenance',
       severity: 'warning',
       title: `High open issue count (${repoData.open_issues_count} open issues)`,
-      description: 'A accumulating stack of unresolved issues signals delayed maintenance or triage.'
+      description: 'An accumulating stack of unresolved issues signals delayed maintenance or triage.'
     });
     suggestions.push({
       id: 'triage-issues',
@@ -143,11 +224,6 @@ async function fetchRealGitHubRepo(owner: string, repo: string): Promise<Analysi
     });
   }
 
-  if (repoData.stargazers_count === 0) {
-    score -= 5;
-  }
-
-  // Ensure score stays bounded
   score = Math.max(25, Math.min(98, score));
 
   // Determine score label
@@ -155,30 +231,28 @@ async function fetchRealGitHubRepo(owner: string, repo: string): Promise<Analysi
   if (score >= 80) scoreLabel = 'Solid Codebase 🏆';
   else if (score >= 50) scoreLabel = 'Needs Salvation ⚠️';
 
-  // Generate dynamic, witty roast using real repo facts
-  let roast = '';
-  if (repoData.stargazers_count === 0 && repoData.open_issues_count > 0) {
-    roast = `'${repoData.name}' has 0 stars on GitHub, yet somehow managed to accumulate ${repoData.open_issues_count} open issues. Even your bug reporters left before starring!`;
-  } else if (!hasGitignore) {
-    roast = `Analyzing '${repoData.name}'... You don't have a .gitignore file in root. Are you planning to commit your entire node_modules folder to GitHub as a backup strategy?`;
-  } else if (repoData.forks_count === 0 && repoData.stargazers_count < 5) {
-    roast = `'${repoData.name}' has ${repoData.stargazers_count} stars and 0 forks. The code is so unique that even Stack Overflow couldn't find a duplicate.`;
-  } else {
-    roast = `Analyzing '${repoData.name}' (${repoData.stargazers_count} ⭐, ${detectedTech.join(', ') || 'Mixed'}). Code size is ~${Math.round(repoData.size * 0.8)} KB. It works, but your commit history reads like a dramatic monologue of trial and error.`;
-  }
-
-  const linesOfCodeEstimate = `~${(repoData.size * 25).toLocaleString()} lines`;
-  const fileCountEstimate = Math.max(12, Math.round(repoData.size / 15));
+  // Generate intensity roasts
+  const roasts = generateIntensityRoasts(
+    repoData.name,
+    repoData.stargazers_count,
+    repoData.open_issues_count,
+    detectedTech,
+    intensity
+  );
 
   return {
     score,
     scoreLabel,
-    roast,
+    roast: roasts.main,
+    alternativeRoasts: roasts.alternatives,
+    intensity,
     projectSummary: {
       projectName: repoData.full_name || repoData.name,
       detectedTech: detectedTech.length > 0 ? detectedTech : ['JavaScript', 'HTML'],
-      fileCountEstimate,
-      linesOfCodeEstimate
+      fileCountEstimate: Math.max(12, Math.round(repoData.size / 15)),
+      linesOfCodeEstimate: `~${(repoData.size * 25).toLocaleString()} lines`,
+      starsCount: repoData.stargazers_count,
+      openIssuesCount: repoData.open_issues_count
     },
     issues: issues.length > 0 ? issues : [
       'README is incomplete',
@@ -189,42 +263,46 @@ async function fetchRealGitHubRepo(owner: string, repo: string): Promise<Analysi
       'Improve the README',
       'Add a .gitignore',
       'Remove debug logs'
-    ]
+    ],
+    snippets
   };
 }
 
 /**
  * Main project analysis service
- * Fetches real live GitHub data for URLs, or returns simulated analysis for presets/ZIP uploads.
  */
 export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisResult> {
   const inputStr = (params.value || params.fileName || '').toLowerCase();
+  const intensity = params.intensity || 'brutal';
 
-  // 1. Check presets first for instant mock demonstration
+  // 1. Check presets
   if (inputStr.includes('monolith') || inputStr.includes('spaghetti') || inputStr.includes('v3-final')) {
     return new Promise((resolve) => {
-      setTimeout(() => resolve({ ...MOCK_RESPONSES_BY_PRESET['spaghetti-monolith'] }), 1500);
+      const base = MOCK_RESPONSES_BY_PRESET['spaghetti-monolith'];
+      setTimeout(() => resolve({ ...base, intensity }), 1500);
     });
   }
 
   if (inputStr.includes('todo') || inputStr.includes('clean-arch') || inputStr.includes('enterprise')) {
     return new Promise((resolve) => {
-      setTimeout(() => resolve({ ...MOCK_RESPONSES_BY_PRESET['overengineered-todo'] }), 1500);
+      const base = MOCK_RESPONSES_BY_PRESET['overengineered-todo'];
+      setTimeout(() => resolve({ ...base, intensity }), 1500);
     });
   }
 
   if (inputStr.includes('hackathon') || inputStr.includes('crypto') || inputStr.includes('ai-crypto')) {
     return new Promise((resolve) => {
-      setTimeout(() => resolve({ ...MOCK_RESPONSES_BY_PRESET['weekend-hackathon'] }), 1500);
+      const base = MOCK_RESPONSES_BY_PRESET['weekend-hackathon'];
+      setTimeout(() => resolve({ ...base, intensity }), 1500);
     });
   }
 
-  // 2. Fetch REAL GitHub repository data live if a GitHub URL is passed
+  // 2. Fetch REAL GitHub repository data live
   if (params.type === 'url' && params.value) {
     const gitHubInfo = parseGitHubUrl(params.value);
     if (gitHubInfo) {
       try {
-        const realResult = await fetchRealGitHubRepo(gitHubInfo.owner, gitHubInfo.repo);
+        const realResult = await fetchRealGitHubRepo(gitHubInfo.owner, gitHubInfo.repo, intensity);
         return realResult;
       } catch (err: any) {
         console.warn('Real GitHub fetch error, falling back to mock generator:', err);
@@ -235,13 +313,14 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
     }
   }
 
-  // 3. Simulated delay & fallback generator for ZIP uploads or custom inputs
+  // 3. Fallback generator for ZIP uploads or custom inputs
   return new Promise((resolve) => {
     setTimeout(() => {
       if (params.type === 'zip' && params.fileName) {
         const cleanName = params.fileName.replace(/\.zip$/i, '');
         resolve({
           ...DEFAULT_MOCK_RESPONSE,
+          intensity,
           projectSummary: {
             ...DEFAULT_MOCK_RESPONSE.projectSummary,
             projectName: cleanName,
@@ -253,7 +332,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
         return;
       }
 
-      resolve(DEFAULT_MOCK_RESPONSE);
+      resolve({ ...DEFAULT_MOCK_RESPONSE, intensity });
     }, 2000);
   });
 }

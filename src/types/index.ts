@@ -1,4 +1,5 @@
 export type IssueSeverity = 'critical' | 'warning' | 'info';
+export type RoastIntensity = 'mild' | 'brutal' | 'nuclear';
 
 export interface ProjectIssue {
   id: string;
@@ -15,18 +16,30 @@ export interface ProjectSuggestion {
   description: string;
 }
 
+export interface CodeSnippet {
+  fileName: string;
+  language: string;
+  code: string;
+  roastComment: string;
+}
+
 export interface AnalysisResult {
   score: number;
   scoreLabel: string;
   roast: string;
+  alternativeRoasts?: string[];
+  intensity?: RoastIntensity;
   projectSummary: {
     projectName: string;
     detectedTech: string[];
     fileCountEstimate: number;
     linesOfCodeEstimate: string;
+    starsCount?: number;
+    openIssuesCount?: number;
   };
   issues: string[] | ProjectIssue[];
   suggestions: string[] | ProjectSuggestion[];
+  snippets?: CodeSnippet[];
 }
 
 export interface AnalyzeParams {
@@ -34,6 +47,7 @@ export interface AnalyzeParams {
   value: string;
   fileName?: string;
   fileSize?: string;
+  intensity?: RoastIntensity;
 }
 
 export interface SamplePreset {
