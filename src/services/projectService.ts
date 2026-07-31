@@ -59,16 +59,16 @@ function generateIntensityRoasts(projectName: string, stars: number, issuesCount
 }
 
 /**
- * Generates high-value, constructive developer advice based on score and project health
+ * Generates advice written ON BEHALF OF THE CODEBASE talking directly to the developer
  */
-function generateDeveloperAdvice(score: number): string {
+function generateDeveloperAdvice(score: number, projectName: string): string {
   if (score >= 80) {
-    return "Great work! Your codebase architecture is solid. To make it production-ready, set up automated CI/CD pipelines, write unit tests for critical paths, and document key architecture decisions in your README.";
+    return `"Hey Dev! 💬 I'm your codebase for '${projectName}'. I feel super clean, fast, and structured! To make me bulletproof in production, give me automated CI/CD workflows, add unit tests for my core functions, and document my architecture so new contributors can understand me easily."`;
   }
   if (score >= 50) {
-    return "You have a working foundation! Focus next on modularizing large components, stripping out debug console.logs, setting up a strict .gitignore, and adding an open-source LICENSE file.";
+    return `"Hey Dev! 💬 I'm your codebase for '${projectName}'. I'm working, but I'm getting a bit messy! Please break down my giant components into smaller files, purge all my dangling console.logs, add a .gitignore so node_modules doesn't weigh me down, and give me a LICENSE!"`;
   }
-  return "Don't be discouraged! Break down monolithic files into smaller reusable modules, secure secret keys inside environment variables, and run ESLint to catch formatting issues early. Every great engineer started here!";
+  return `"Hey Dev! 💬 Please take mercy on me! I'm your codebase for '${projectName}' and I'm currently held together by duct tape. Please split my massive files, keep my secret API keys inside .env files, and run ESLint so I can breathe clean code again!"`;
 }
 
 /**
@@ -252,7 +252,7 @@ async function fetchRealGitHubRepo(owner: string, repo: string, intensity: Roast
     intensity
   );
 
-  const developerAdvice = generateDeveloperAdvice(score);
+  const developerAdvice = generateDeveloperAdvice(score, repoData.name);
 
   return {
     score,
@@ -294,7 +294,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
   if (inputStr.includes('monolith') || inputStr.includes('spaghetti') || inputStr.includes('v3-final')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['spaghetti-monolith'];
-      const advice = generateDeveloperAdvice(base.score);
+      const advice = generateDeveloperAdvice(base.score, base.projectSummary.projectName);
       setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
@@ -302,7 +302,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
   if (inputStr.includes('todo') || inputStr.includes('clean-arch') || inputStr.includes('enterprise')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['overengineered-todo'];
-      const advice = generateDeveloperAdvice(base.score);
+      const advice = generateDeveloperAdvice(base.score, base.projectSummary.projectName);
       setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
@@ -310,7 +310,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
   if (inputStr.includes('hackathon') || inputStr.includes('crypto') || inputStr.includes('ai-crypto')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['weekend-hackathon'];
-      const advice = generateDeveloperAdvice(base.score);
+      const advice = generateDeveloperAdvice(base.score, base.projectSummary.projectName);
       setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
@@ -336,7 +336,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
     setTimeout(() => {
       if (params.type === 'zip' && params.fileName) {
         const cleanName = params.fileName.replace(/\.zip$/i, '');
-        const advice = generateDeveloperAdvice(78);
+        const advice = generateDeveloperAdvice(78, cleanName);
         resolve({
           ...DEFAULT_MOCK_RESPONSE,
           intensity,
@@ -352,7 +352,7 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
         return;
       }
 
-      const advice = generateDeveloperAdvice(DEFAULT_MOCK_RESPONSE.score);
+      const advice = generateDeveloperAdvice(DEFAULT_MOCK_RESPONSE.score, DEFAULT_MOCK_RESPONSE.projectSummary.projectName);
       resolve({ ...DEFAULT_MOCK_RESPONSE, intensity, developerAdvice: advice });
     }, 2000);
   });
