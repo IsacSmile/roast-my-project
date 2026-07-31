@@ -61,4 +61,4 @@ To connect **Roast My Project** to a live LLM API (OpenAI GPT-4o, Google Gemini,
 
 ## 📄 Credits & Author
 
-Conceived by **ChatGPT** • Orchestrated by **Antigravity** • Masterminded by **FAIZ IMAM** ([@IsacSmile](https://github.com/IsacSmile))
+Conceived by **ChatGPT** • Orchestrated by **Antigravity** • Brought to Life by **FAIZ IMAM** ([@IsacSmile](https://github.com/IsacSmile))

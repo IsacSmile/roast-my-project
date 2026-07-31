@@ -31,7 +31,7 @@ export const MarqueeBar: React.FC<MarqueeBarProps> = ({
       <span>Orchestrated By Antigravity</span>
       <span className="text-zinc-700">•</span>
       <span>
-        Masterminded By{' '}
+        Brought To Life By{' '}
         <strong className="font-bold text-orange-400 tracking-widest text-sm">
           FAIZ IMAM
         </strong>
