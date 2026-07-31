@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, RotateCcw, AlertTriangle, CheckCircle, Code, Layers, FileCode, Star, GitPullRequest } from 'lucide-react';
+import { Flame, RotateCcw, AlertTriangle, CheckCircle, Code, Layers, FileCode, Star, GitPullRequest, Lightbulb } from 'lucide-react';
 import type { AnalysisResult } from '../types';
 import { RoastCard } from './RoastCard';
 import { HealthScoreGauge } from './HealthScoreGauge';
@@ -47,12 +47,36 @@ export const ResultsSection: React.FC<ResultsSectionProps> = ({ result, onReset 
         intensity={result.intensity}
       />
 
-      {/* 2. Live Code Inspector Tab (if snippets available) */}
+      {/* 2. 💡 Short Advice to the Developer */}
+      {result.developerAdvice && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-zinc-900/90 border border-amber-500/30 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+          <div className="flex items-start space-x-4">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+              <Lightbulb className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-amber-300 tracking-wide uppercase font-mono">
+                  💡 Short Advice for Developer
+                </h3>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  PRO TIP
+                </span>
+              </div>
+              <p className="text-sm text-zinc-200 leading-relaxed font-sans">
+                {result.developerAdvice}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Live Code Inspector Tab (if snippets available) */}
       {result.snippets && result.snippets.length > 0 && (
         <CodeInspector snippets={result.snippets} />
       )}
 
-      {/* 3. Grid Layout: Left Column (Health Score + Project Metadata), Right Column (Issues & Suggestions) */}
+      {/* 4. Grid Layout: Left Column (Health Score + Project Metadata), Right Column (Issues & Suggestions) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Column (4 cols on lg) */}

@@ -29,6 +29,7 @@ export interface AnalysisResult {
   roast: string;
   alternativeRoasts?: string[];
   intensity?: RoastIntensity;
+  developerAdvice?: string;
   projectSummary: {
     projectName: string;
     detectedTech: string[];

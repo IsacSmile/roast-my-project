@@ -59,6 +59,19 @@ function generateIntensityRoasts(projectName: string, stars: number, issuesCount
 }
 
 /**
+ * Generates high-value, constructive developer advice based on score and project health
+ */
+function generateDeveloperAdvice(score: number): string {
+  if (score >= 80) {
+    return "Great work! Your codebase architecture is solid. To make it production-ready, set up automated CI/CD pipelines, write unit tests for critical paths, and document key architecture decisions in your README.";
+  }
+  if (score >= 50) {
+    return "You have a working foundation! Focus next on modularizing large components, stripping out debug console.logs, setting up a strict .gitignore, and adding an open-source LICENSE file.";
+  }
+  return "Don't be discouraged! Break down monolithic files into smaller reusable modules, secure secret keys inside environment variables, and run ESLint to catch formatting issues early. Every great engineer started here!";
+}
+
+/**
  * Fetches real GitHub repository metadata and code snippets live from GitHub Public REST API
  */
 async function fetchRealGitHubRepo(owner: string, repo: string, intensity: RoastIntensity = 'brutal'): Promise<AnalysisResult> {
@@ -106,7 +119,7 @@ async function fetchRealGitHubRepo(owner: string, repo: string, intensity: Roast
     hasReadme = Boolean(repoData.description);
   }
 
-  // Fetch live code snippets from repository root (e.g. package.json or README)
+  // Fetch live code snippets from repository root
   const snippets: CodeSnippet[] = [];
   try {
     const contentsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
@@ -141,7 +154,6 @@ async function fetchRealGitHubRepo(owner: string, repo: string, intensity: Roast
     // Snippets fallback if rate limited
   }
 
-  // Fallback snippet if none fetched
   if (snippets.length === 0) {
     snippets.push({
       fileName: 'src/App.tsx',
@@ -231,7 +243,7 @@ async function fetchRealGitHubRepo(owner: string, repo: string, intensity: Roast
   if (score >= 80) scoreLabel = 'Solid Codebase 🏆';
   else if (score >= 50) scoreLabel = 'Needs Salvation ⚠️';
 
-  // Generate intensity roasts
+  // Generate intensity roasts and developer advice
   const roasts = generateIntensityRoasts(
     repoData.name,
     repoData.stargazers_count,
@@ -240,12 +252,15 @@ async function fetchRealGitHubRepo(owner: string, repo: string, intensity: Roast
     intensity
   );
 
+  const developerAdvice = generateDeveloperAdvice(score);
+
   return {
     score,
     scoreLabel,
     roast: roasts.main,
     alternativeRoasts: roasts.alternatives,
     intensity,
+    developerAdvice,
     projectSummary: {
       projectName: repoData.full_name || repoData.name,
       detectedTech: detectedTech.length > 0 ? detectedTech : ['JavaScript', 'HTML'],
@@ -279,21 +294,24 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
   if (inputStr.includes('monolith') || inputStr.includes('spaghetti') || inputStr.includes('v3-final')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['spaghetti-monolith'];
-      setTimeout(() => resolve({ ...base, intensity }), 1500);
+      const advice = generateDeveloperAdvice(base.score);
+      setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
 
   if (inputStr.includes('todo') || inputStr.includes('clean-arch') || inputStr.includes('enterprise')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['overengineered-todo'];
-      setTimeout(() => resolve({ ...base, intensity }), 1500);
+      const advice = generateDeveloperAdvice(base.score);
+      setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
 
   if (inputStr.includes('hackathon') || inputStr.includes('crypto') || inputStr.includes('ai-crypto')) {
     return new Promise((resolve) => {
       const base = MOCK_RESPONSES_BY_PRESET['weekend-hackathon'];
-      setTimeout(() => resolve({ ...base, intensity }), 1500);
+      const advice = generateDeveloperAdvice(base.score);
+      setTimeout(() => resolve({ ...base, intensity, developerAdvice: advice }), 1500);
     });
   }
 
@@ -318,9 +336,11 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
     setTimeout(() => {
       if (params.type === 'zip' && params.fileName) {
         const cleanName = params.fileName.replace(/\.zip$/i, '');
+        const advice = generateDeveloperAdvice(78);
         resolve({
           ...DEFAULT_MOCK_RESPONSE,
           intensity,
+          developerAdvice: advice,
           projectSummary: {
             ...DEFAULT_MOCK_RESPONSE.projectSummary,
             projectName: cleanName,
@@ -332,7 +352,8 @@ export async function analyzeProject(params: AnalyzeParams): Promise<AnalysisRes
         return;
       }
 
-      resolve({ ...DEFAULT_MOCK_RESPONSE, intensity });
+      const advice = generateDeveloperAdvice(DEFAULT_MOCK_RESPONSE.score);
+      resolve({ ...DEFAULT_MOCK_RESPONSE, intensity, developerAdvice: advice });
     }, 2000);
   });
 }
