@@ -26,12 +26,12 @@ export const MarqueeBar: React.FC<MarqueeBarProps> = ({
       <span className="text-zinc-700">•</span>
       <span>Your AI Code Reviewer With A Sense Of Humor</span>
       <span className="text-zinc-700">•</span>
-      <span>Built By Antigravity</span>
+      <span>Conceived By ChatGPT</span>
       <span className="text-zinc-700">•</span>
-      <span>Idea By ChatGPT</span>
+      <span>Orchestrated By Antigravity</span>
       <span className="text-zinc-700">•</span>
       <span>
-        Final Touch By{' '}
+        Masterminded By{' '}
         <strong className="font-bold text-orange-400 tracking-widest text-sm">
           FAIZ IMAM
         </strong>
