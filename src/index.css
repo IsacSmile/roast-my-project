@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 4 Directional Marquee Animations */
+  @keyframes marqueeLeftToRight {
+    0% {
+      transform: translateX(-50%);
+    }
+    100% {
+      transform: translateX(0%);
+    }
+  }
+
+  @keyframes marqueeRightToLeft {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes marqueeBottomToTop {
+    0% {
+      transform: translateY(0%);
+    }
+    100% {
+      transform: translateY(-50%);
+    }
+  }
+
+  @keyframes marqueeTopToBottom {
+    0% {
+      transform: translateY(-50%);
+    }
+    100% {
+      transform: translateY(0%);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-marquee-left-to-right {
+    display: flex;
+    width: max-content;
+    animation: marqueeLeftToRight var(--marquee-speed, 30s) linear infinite;
+  }
+
+  .animate-marquee-right-to-left {
+    display: flex;
+    width: max-content;
+    animation: marqueeRightToLeft var(--marquee-speed, 30s) linear infinite;
+  }
+
+  .animate-marquee-bottom-to-top {
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+    animation: marqueeBottomToTop var(--marquee-speed, 30s) linear infinite;
+  }
+
+  .animate-marquee-top-to-bottom {
+    display: flex;
+    flex-direction: column;
+    height: max-content;
+    animation: marqueeTopToBottom var(--marquee-speed, 30s) linear infinite;
+  }
+
+  .animate-marquee-left-to-right:hover,
+  .animate-marquee-right-to-left:hover,
+  .animate-marquee-bottom-to-top:hover,
+  .animate-marquee-top-to-bottom:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* Custom scrollbar aesthetics for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
