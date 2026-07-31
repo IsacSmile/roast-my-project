@@ -32,9 +32,14 @@ export const MarqueeBar: React.FC<MarqueeBarProps> = ({
       <span className="text-zinc-700">•</span>
       <span>
         Brought To Life By{' '}
-        <strong className="font-cursive text-sm font-bold text-orange-400 tracking-wider capitalize normal-case">
+        <a
+          href="https://github.com/IsacSmile"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-cursive text-sm font-bold text-orange-400 hover:text-amber-300 transition-colors tracking-wider capitalize normal-case"
+        >
           Faiz Imam
-        </strong>
+        </a>
       </span>
       <span className="text-zinc-700">{isVertical ? '│' : '•'}</span>
     </div>
